@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ── AUTH MODAL ── -->
+  <div class="modal-overlay" id="auth-modal" hidden>
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close-btn" aria-label="Close"><i class="fa fa-times"></i></button>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="login">Login</button>
+        <button class="modal-tab" data-tab="register">Register</button>
+      </div>
+      <!-- Login -->
+      <div class="modal-form" id="tab-login">
+        <h2 class="modal-title">Welcome Back</h2>
+        <p class="modal-sub">Sign in to access your saved cities</p>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" />
+        </div>
+        <button class="btn-primary" id="login-btn"><i class="fa fa-sign-in-alt"></i> Sign In</button>
+        <p class="modal-err" id="login-err"></p>
+      </div>
+      <!-- Register -->
+      <div class="modal-form" id="tab-register" hidden>
+        <h2 class="modal-title">Create Account</h2>
+        <p class="modal-sub">Save cities and get weather alerts</p>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="reg-name" placeholder="Your name" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Min 6 characters" />
+        </div>
+        <button class="btn-primary" id="register-btn"><i class="fa fa-user-plus"></i> Create Account</button>
+        <p class="modal-err" id="reg-err"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ALERT TOAST CONTAINER ── -->
+  <div id="alert-toasts" aria-live="polite"></div>
+
+  <div class="wrapper">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+
+      <!-- Search -->
+      <form class="search" id="search">
+        <input type="text" id="query" placeholder="Search city…" autocomplete="off" />
+        <button type="submit" aria-label="Search">
+          <i class="fa fa-search"></i>
+        </button>
+      </form>
+
+      <!-- Weather icon -->
+      <div class="weather-icon">
+        <img id="icon" src="https://i.ibb.co/rb4rrJL/26.png" alt="Weather icon" />
+      </div>
+
+      <!-- Temperature -->
+      <div class="temperature">
+        <h1 id="temp">--</h1>
+        <span class="temp-unit">°C</span>
+      </div>
+
+      <!-- Date / time -->
+      <p id="date-time" class="date-time">--</p>
+
+      <div class="divider"></div>
+
+      <!-- Condition + rain -->
+      <div class="condition-rain">
+        <div>
+          <i class="fa fa-cloud"></i>
+          <p id="condition">--</p>
+        </div>
+        <div>
+          <i class="fa fa-droplet"></i>
+          <p id="rain">Precip --</p>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="location">
+        <i class="fa fa-location-dot"></i>
+        <p id="location">Detecting location…</p>
+      </div>
+
+      <!-- Save City Button (shows when logged in) -->
+      <button class="btn-save-city" id="save-city-btn" title="Save this city" hidden>
+        <i class="fa fa-heart"></i> Save City
+      </button>
+
+      <!-- Auth button -->
+      <button class="btn-auth" id="auth-trigger-btn">
+        <i class="fa fa-user"></i> <span id="auth-label">Sign In</span>
+      </button>
+      <!-- Logged in user display -->
+      <div class="user-chip" id="user-chip" hidden>
+        <i class="fa fa-circle-check"></i>
+        <span id="user-chip-name">User</span>
+      </div>
+
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="main">
+
+      <!-- Nav -->
+      <nav class="top-nav">
+        <div class="nav-options">
+          <button class="week active" aria-label="Weekly forecast">Week</button>
+          <button class="hourly" aria-label="Hourly forecast">Today</button>
+          <button class="alerts-tab" id="alerts-nav-btn" aria-label="Weather Alerts">
+            <i class="fa fa-bell"></i> Alerts
+            <span class="alert-badge" id="alert-badge" hidden>0</span>
+          </button>
+          <button class="favorites-tab" id="favorites-nav-btn" aria-label="Favorites" hidden>
+            <i class="fa fa-heart"></i> Favorites
+          </button>
+        </div>
+        <div class="nav-units">
+          <button class="celcius active" aria-label="Celsius">°C</button>
+          <button class="fahrenheit" aria-label="Fahrenheit">°F</button>
+        </div>
+      </nav>
+
+      <!-- ── ALERTS PANEL ── -->
+      <section class="alerts-panel" id="alerts-panel" hidden>
+        <div class="alerts-header">
+          <h2 class="heading"><i class="fa fa-triangle-exclamation"></i> Active Weather Alerts</h2>
+          <button class="btn-notif" id="notif-btn" title="Enable browser notifications">
+            <i class="fa fa-bell"></i> Enable Notifications
+          </button>
+        </div>
+        <div class="alerts-list" id="alerts-list">
+          <p class="no-alerts"><i class="fa fa-shield-halved"></i> No active alerts — conditions look safe!</p>
+        </div>
+        <div class="alert-legend">
+          <span class="legend-item danger"><i class="fa fa-circle"></i> Danger</span>
+          <span class="legend-item warning"><i class="fa fa-circle"></i> Warning</span>
+          <span class="legend-item info"><i class="fa fa-circle"></i> Advisory</span>
+        </div>
+        <p class="alert-check-info"><i class="fa fa-rotate"></i> Conditions checked automatically every 30 minutes</p>
+      </section>
+
+      <!-- ── FAVORITES PANEL ── -->
+      <section class="favorites-panel" id="favorites-panel" hidden>
+        <h2 class="heading"><i class="fa fa-heart"></i> Saved Cities</h2>
+        <div class="favorites-grid" id="favorites-grid">
+          <p class="no-favs">No saved cities yet. Search for a city and click <i class="fa fa-heart"></i> Save City.</p>
+        </div>
+      </section>
+
+      <!-- Forecast cards -->
+      <section class="forecast-section">
+        <div class="cards" id="weather-cards"></div>
+      </section>
+
+      <!-- Highlights -->
+      <section class="highlights">
+        <h2 class="heading">Today's Highlights</h2>
+        <div class="highlights-grid">
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-sun"></i> UV Index</h4>
+            <div class="content">
+              <p class="uv-index big-num">--</p>
+              <p class="uv-text label">--</p>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-wind"></i> Wind Status</h4>
+            <div class="content">
+              <p class="wind-speed big-num">--</p>
+              <p class="label">km/h</p>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-circle-half-stroke"></i> Sunrise &amp; Sunset</h4>
+            <div class="content rise-set">
+              <div><i class="fa fa-arrow-up"></i><span class="sun-rise">--</span></div>
+              <div><i class="fa fa-arrow-down"></i><span class="sun-set">--</span></div>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-droplet"></i> Humidity</h4>
+            <div class="content">
+              <p class="humidity big-num">--%</p>
+              <p class="humidity-status label">--</p>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-eye"></i> Visibility</h4>
+            <div class="content">
+              <p class="visibilty big-num">-- km</p>
+              <p class="visibilty-status label">--</p>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h4 class="card-heading"><i class="fa fa-leaf"></i> Air Quality</h4>
+            <div class="content">
+              <p class="air-quality big-num">--</p>
+              <p class="air-quality-status label">--</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p class="credits">Designed &amp; developed by Lokesh</p>
+        <div class="social-links">
+          <a href="https://twitter.com/ERICKWILLS5?t=azmYEYjDvPtRA7_SZiKYuQ&s=09" aria-label="Twitter" target="_blank" rel="noopener">
+            <i class="fa-brands fa-twitter"></i>
+          </a>
+          <a href="https://github.com/erehh07" aria-label="GitHub" target="_blank" rel="noopener">
+            <i class="fa-brands fa-github"></i>
+          </a>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="features.js"></script>
+</body>
+</html>
